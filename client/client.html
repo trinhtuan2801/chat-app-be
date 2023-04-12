@@ -1,0 +1,105 @@
+<!doctype html>
+<html class="no-js" lang="">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    .content {
+      display: flex;
+      justify-content: space-around;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="content">
+    <div class="wrap-content">
+      <div>
+        <ul id="messages"></ul>
+      </div>
+
+      <div>
+        <div>
+          Message:
+          <input id="message" type="text" />
+        </div>
+        <div>
+          Room ID:
+          <input id="conversation_id" type="text" value="1" />
+        </div>
+        <div>
+          <button onclick="handleSubmitNewMessage()">Send Message</button>
+        </div>
+      </div>
+
+      <div>
+        <h3>Lịch sử trò chuyện</h3>
+        <ul id="conversations"></ul>
+      </div>
+    </div>
+    <div class="wrap-content">
+      <div>
+        <h3>Online</h3>
+        <ul id="users"></ul>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+  <script>
+    const socket = io('http://localhost:3000');
+
+    const message = document.getElementById('message');
+    const messages = document.getElementById('messages');
+    const users = document.getElementById('users');
+    const conversations = document.getElementById('conversations');
+    const conversation_id = document.getElementById('conversation_id');
+
+    const handleSubmitNewMessage = () => {
+      socket.emit('message', {
+        status: true,
+        message: message.value,
+        conversation_id: conversation_id.value,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    };
+    socket.on('message', (message) => {
+      messages.innerHTML = '';
+      handleNewMessage(message.user_id, message.message, message.room);
+    });
+    const handleNewMessage = (user_id, message, room) => {
+      messages.innerHTML += `${room}`;
+      if (user_id && message) {
+        messages.innerHTML += `<li>${user_id}: ${message}</li>`;
+      }
+    };
+
+    socket.on('users', (arr_user) => {
+      users.innerHTML = '';
+      arr_user.forEach((element) => {
+        handleNewUser(element);
+      });
+    });
+    const handleNewUser = (data) => {
+      users.innerHTML += `<li>${data}</li>`;
+    };
+    
+    socket.on('conversations', (arr_conversation) => {
+      conversations.innerHTML = '';
+      arr_conversation.forEach((element) => {
+        handleNewConversation(element);
+      });
+    });
+    const handleNewConversation = (data) => {
+      conversations.innerHTML += `<li>${data.title} - ${data.id}</li>`;
+    };
+
+    const handleSubmitLeave = () => {
+      socket.emit('leave', room.value);
+    };
+  </script>
+</body>
+
+</html>
